@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 | (mes réservations, paiement, billets, annulation...).
 */
 
-Route::middleware(['auth', 'verified', 'role:voyageur'])
+Route::middleware(['auth', 'role:voyageur'])
     ->prefix('voyageur')
     ->name('voyageur.')
     ->group(function () {

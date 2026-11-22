@@ -5,32 +5,45 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
+        @include('layouts.head')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+    <body class="bg-surface font-body-md text-body-md text-on-surface antialiased">
+        <div class="flex min-h-screen flex-col">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <header class="border-b border-outline-variant/40 bg-surface-container-lowest">
+                    <div class="mx-auto max-w-[1200px] px-4 py-6 sm:px-8">
                         {{ $header }}
                     </div>
                 </header>
             @endisset
 
-            <!-- Page Content -->
-            <main>
+            @if (session('succes') || session('erreur'))
+                <div class="mx-auto mt-4 w-full max-w-[1200px] space-y-2 px-4 sm:px-8">
+                    @if (session('succes'))
+                        <div class="flex items-center gap-2 rounded-lg bg-primary-fixed px-4 py-3 font-body-md text-body-md text-on-primary-fixed-variant">
+                            <x-ui.icon>check_circle</x-ui.icon>
+                            {{ session('succes') }}
+                        </div>
+                    @endif
+                    @if (session('erreur'))
+                        <div class="flex items-center gap-2 rounded-lg bg-error-container px-4 py-3 font-body-md text-body-md text-on-error-container">
+                            <x-ui.icon>error</x-ui.icon>
+                            {{ session('erreur') }}
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            <main class="flex-1">
                 {{ $slot }}
             </main>
+
+            @include('layouts.footer')
         </div>
     </body>
 </html>

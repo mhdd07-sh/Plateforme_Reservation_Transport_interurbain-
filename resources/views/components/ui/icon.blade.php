@@ -1,0 +1,1 @@
+<span {{ $attributes->merge(['class' => 'material-symbols-outlined']) }} aria-hidden="true">{{ $slot }}</span>
