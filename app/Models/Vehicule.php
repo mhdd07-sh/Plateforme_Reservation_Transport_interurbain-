@@ -71,6 +71,28 @@ class Vehicule extends Model
         }
     }
 
+        /**
+     * Adapte les sièges à la capacité (ajoute les manquants, supprime le surplus).
+     * Retourne false, sans rien supprimer, si un siège en surplus a déjà été réservé.
+     */
+    public function synchroniserSieges(): bool
+    {
+        $surplus = Siege::where('vehicule_id', $this->id)->where('numero', '>', $this->capacite);
+
+        $dejaUtilises = (clone $surplus)
+            ->whereIn('id', fn ($q) => $q->select('siege_id')->from('reservation_siege'))
+            ->exists();
+
+        if ($dejaUtilises) {
+            return false;
+        }
+
+        $surplus->delete();
+        $this->genererSieges();
+
+        return true;
+    }
+
     /**
      * Règle de disponibilité (méthode vérifierDisponibilité() du diagramme de classes) :
      * le véhicule n'est pas déjà affecté à un autre trajet non annulé à la même date et heure.
