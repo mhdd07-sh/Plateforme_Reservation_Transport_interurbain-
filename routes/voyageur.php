@@ -1,19 +1,21 @@
 <?php
 
+use App\Http\Controllers\Voyageur\ReservationController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Routes du voyageur (fichier géré par l'Étudiant B)
-|--------------------------------------------------------------------------
-| Les routes publiques (accueil, recherche de trajets) restent dans web.php.
-| Ici : tout ce qui nécessite d'être connecté en tant que voyageur
-| (mes réservations, paiement, billets, annulation...).
-*/
-
-Route::middleware(['auth', 'role:voyageur'])
+Route::middleware(['auth', 'verified', 'role:voyageur'])
     ->prefix('voyageur')
     ->name('voyageur.')
     ->group(function () {
-        // B ajoute ses routes ici.
+        Route::get('reservations', [ReservationController::class, 'index'])->name('reservations.index');
+        Route::get('reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+
+        Route::post('trajets/{trajet}/reserver', [ReservationController::class, 'store'])
+            ->middleware('throttle:20,1')
+            ->name('reservations.store');
+
+        Route::post('reservations/{reservation}/abandonner', [ReservationController::class, 'abandonner'])
+            ->name('reservations.abandonner');
+
+        // Paiement, billets, annulation avec remboursement : branches suivantes.
     });
