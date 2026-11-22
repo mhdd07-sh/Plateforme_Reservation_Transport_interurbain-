@@ -3,9 +3,15 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RechercheTrajetController;
 
 // --- Pages publiques -------------------------------------------------------
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/trajets', [RechercheTrajetController::class, 'index'])->name('trajets.index');
+Route::get('/trajets/{trajet}', [RechercheTrajetController::class, 'show'])
+    ->whereNumber('trajet')
+    ->name('trajets.show');
 
 // --- Redirection après connexion selon le rôle -----------------------------
 Route::get('/dashboard', function () {
