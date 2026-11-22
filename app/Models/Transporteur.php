@@ -12,12 +12,15 @@ class Transporteur extends Model
 {
     use HasFactory;
 
+    public const TYPE_PARTICULIER = 'particulier';
+    public const TYPE_COMPAGNIE = 'compagnie';
     public const STATUT_EN_ATTENTE = 'en_attente';
     public const STATUT_VALIDE = 'valide';
     public const STATUT_SUSPENDU = 'suspendu';
 
     protected $fillable = [
         'user_id',
+        'type',
         'nom_compagnie',
         'numero_agrement',
         'statut',

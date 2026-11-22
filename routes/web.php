@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// --- Pages publiques -------------------------------------------------------
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// --- Redirection après connexion selon le rôle -----------------------------
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
@@ -27,4 +28,3 @@ require __DIR__.'/auth.php';
 require __DIR__.'/voyageur.php';
 require __DIR__.'/transporteur.php';
 require __DIR__.'/admin.php';
-require __DIR__.'/settings.php';

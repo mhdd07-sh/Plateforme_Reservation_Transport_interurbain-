@@ -96,6 +96,21 @@ class Trajet extends Model
             ->when($arrivee, fn ($q) => $q->where('ville_arrivee', 'like', '%' . $arrivee . '%'))
             ->when($date, fn ($q) => $q->whereDate('date_depart', Carbon::parse($date)->toDateString()));
     }
+    /** Trajets visibles et réservables : publiés, à venir, d'un transporteur validé. */
+    public function scopeVisibles(Builder $query): Builder
+    {
+        return $query->publies()
+            ->aVenir()
+            ->whereHas('transporteur', fn ($q) => $q->where('statut', Transporteur::STATUT_VALIDE));
+    }
+
+    /** Un voyageur peut-il encore réserver sur ce trajet ? */
+    public function estReservable(): bool
+    {
+        return $this->estPublie()
+            && $this->depart_le->isFuture()
+            && $this->transporteur->estValide();
+    }
 
     // --- Places et sièges ------------------------------------------------
 
