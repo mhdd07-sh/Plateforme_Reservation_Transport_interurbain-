@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Vehicule extends Model
 {
@@ -15,6 +16,8 @@ class Vehicule extends Model
     public const TYPE_TATA = 'tata';
     public const TYPE_MINIBUS = 'minibus';
     public const TYPE_CAR = 'car';
+    public const STATUT_ACTIF = 'actif';
+    public const STATUT_MAINTENANCE = 'en_maintenance';
 
     public const TYPES = [self::TYPE_TATA, self::TYPE_MINIBUS, self::TYPE_CAR];
 
@@ -24,6 +27,8 @@ class Vehicule extends Model
         'marque',
         'capacite',
         'type_vehicule',
+        'statut',
+        'note_maintenance',
     ];
 
     protected $casts = [
@@ -106,5 +111,31 @@ class Vehicule extends Model
             ->where('statut', '!=', Trajet::STATUT_ANNULE)
             ->when($ignorerTrajetId, fn ($q) => $q->where('id', '!=', $ignorerTrajetId))
             ->exists();
+    }
+
+        /** Libellé affiché pour un type de véhicule. */
+    public static function libelleType(?string $type): string
+    {
+        return match ($type) {
+            self::TYPE_MINIBUS => 'Minibus',
+            self::TYPE_TATA => 'Bus Tata',
+            self::TYPE_CAR => 'Grand car',
+            default => (string) $type,
+        };
+    }
+
+    public function estActif(): bool
+    {
+        return $this->statut === self::STATUT_ACTIF;
+    }
+
+    /** Prochain départ (non annulé) de ce véhicule. */
+    public function prochainTrajet(): HasOne
+    {
+        return $this->hasOne(Trajet::class)
+            ->where('statut', '!=', Trajet::STATUT_ANNULE)
+            ->aVenir()
+            ->orderBy('date_depart')
+            ->orderBy('heure_depart');
     }
 }

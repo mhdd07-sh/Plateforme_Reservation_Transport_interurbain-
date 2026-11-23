@@ -17,6 +17,7 @@ class VehiculeRequest extends FormRequest
     {
         $this->merge([
             'immatriculation' => strtoupper(trim((string) $this->input('immatriculation'))),
+            'statut' => $this->input('statut', Vehicule::STATUT_ACTIF),
         ]);
     }
 
@@ -32,6 +33,8 @@ class VehiculeRequest extends FormRequest
             'marque' => ['required', 'string', 'max:50'],
             'type_vehicule' => ['required', Rule::in(Vehicule::TYPES)],
             'capacite' => ['required', 'integer', 'min:1', 'max:100'],
+            'statut' => ['required', Rule::in([Vehicule::STATUT_ACTIF, Vehicule::STATUT_MAINTENANCE])],
+            'note_maintenance' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -42,6 +45,8 @@ class VehiculeRequest extends FormRequest
             'marque' => 'marque',
             'type_vehicule' => 'type de véhicule',
             'capacite' => 'capacité',
+            'statut' => 'statut',
+            'note_maintenance' => 'note de maintenance',
         ];
     }
 
@@ -50,6 +55,7 @@ class VehiculeRequest extends FormRequest
         return [
             'immatriculation.unique' => 'Cette immatriculation est déjà enregistrée.',
             'type_vehicule.in' => 'Le type de véhicule choisi est invalide.',
+            'statut.in' => 'Le statut choisi est invalide.',
         ];
     }
 }
