@@ -186,4 +186,25 @@ class Trajet extends Model
             default => 'neutral',
         };
     }
+
+        /** Départ déjà passé (inverse de scopeAVenir). */
+    public function scopePasses(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->whereDate('date_depart', '<', today())
+                ->orWhere(function (Builder $q2) {
+                    $q2->whereDate('date_depart', today())
+                        ->whereTime('heure_depart', '<=', now()->format('H:i:s'));
+                });
+        });
+    }
+
+    /** Trajets dont tous les sièges sont retenus. */
+    public function scopeComplets(Builder $query): Builder
+    {
+        return $query->whereRaw(
+            '(select count(*) from reservation_siege where reservation_siege.trajet_id = trajets.id)'
+            . ' >= (select capacite from vehicules where vehicules.id = trajets.vehicule_id)'
+        );
+    }
 }

@@ -45,7 +45,9 @@
                 </div>
                 <div class="flex-1">
                     <x-ui.badge tone="danger">Accès restreint</x-ui.badge>
-                    <h1 class="mt-2 font-headline-md text-headline-md text-on-error-container">Votre compte est suspendu</h1>
+                    <h1 class="mt-2 font-headline-md text-headline-md text-on-error-container">
+                        {{ $transporteur->statut === \App\Models\Transporteur::STATUT_REFUSE ? "Votre demande n'a pas été retenue" : 'Votre compte est suspendu' }}
+                    </h1>
                     <p class="mt-1 max-w-2xl font-body-md text-body-md text-on-error-container">
                         Veuillez contacter l'équipe administrative pour régulariser votre situation.
                     </p>

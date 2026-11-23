@@ -17,7 +17,41 @@ class Transporteur extends Model
     public const STATUT_EN_ATTENTE = 'en_attente';
     public const STATUT_VALIDE = 'valide';
     public const STATUT_SUSPENDU = 'suspendu';
+    public const STATUT_REFUSE = 'refuse';
 
+      public function libelleStatut(): string
+    {
+        return match ($this->statut) {
+            self::STATUT_EN_ATTENTE => 'En attente',
+            self::STATUT_VALIDE => 'Validé',
+            self::STATUT_SUSPENDU => 'Suspendu',
+            self::STATUT_REFUSE => 'Refusé',
+            default => (string) $this->statut,
+        };
+    }
+
+    /** Couleur du badge (voir x-ui.badge). */
+    public function toneStatut(): string
+    {
+        return match ($this->statut) {
+            self::STATUT_EN_ATTENTE => 'warning',
+            self::STATUT_VALIDE => 'success',
+            self::STATUT_SUSPENDU => 'danger',
+            default => 'neutral',
+        };
+    }
+
+    public function libelleType(): string
+    {
+        return $this->type === self::TYPE_PARTICULIER ? 'Particulier' : 'Compagnie';
+    }
+
+    /** Nom commercial, ou nom du responsable pour un particulier (charger la relation user). */
+    public function nomAffiche(): string
+    {
+        return $this->nom_compagnie ?: ($this->user?->name ?? 'Transporteur');
+    }
+    
     protected $fillable = [
         'user_id',
         'type',
