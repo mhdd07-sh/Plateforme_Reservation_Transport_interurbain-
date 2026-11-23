@@ -1,26 +1,21 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Ajouter un véhicule
-        </h2>
-    </x-slot>
+    <div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-8">
+        <a href="{{ route('transporteur.vehicules.index') }}" class="inline-flex items-center gap-1 font-label-lg text-label-lg text-primary-container hover:underline">
+            <x-ui.icon>arrow_back</x-ui.icon> Mes véhicules
+        </a>
 
-    <div class="py-8">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            @include('transporteur._menu')
+        <x-page-header titre="Ajouter un véhicule" surtitre="Flotte" />
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('transporteur.vehicules.store') }}">
-                    @csrf
-                    @include('transporteur.vehicules._form')
+        <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-6 shadow-card sm:p-8">
+            <form method="POST" action="{{ route('transporteur.vehicules.store') }}">
+                @csrf
+                @include('transporteur.vehicules._form')
 
-                    <div class="flex items-center gap-4 mt-6">
-                        <x-primary-button>Enregistrer</x-primary-button>
-                        <a href="{{ route('transporteur.vehicules.index') }}"
-                        class="text-sm text-gray-600 dark:text-gray-400 hover:underline">Annuler</a>
-                    </div>
-                </form>
-            </div>
+                <div class="mt-8 flex items-center gap-3">
+                    <x-primary-button>Enregistrer</x-primary-button>
+                    <a href="{{ route('transporteur.vehicules.index') }}" class="px-2 font-label-lg text-label-lg text-on-surface-variant hover:underline">Annuler</a>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

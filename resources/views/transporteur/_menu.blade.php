@@ -1,1 +1,0 @@
-{{-- Le menu est maintenant dans layouts/navigation.blade.php --}}

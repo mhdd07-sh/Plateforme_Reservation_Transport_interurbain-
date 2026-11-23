@@ -1,66 +1,123 @@
+@php
+    $pourcentage = $stats['total'] > 0 ? (int) round($stats['actifs'] / $stats['total'] * 100) : 0;
+    $filtreActif = request()->filled('type') || request()->filled('statut');
+@endphp
+
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Mes véhicules
-            </h2>
-            <a href="{{ route('transporteur.vehicules.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
-                Ajouter un véhicule
-            </a>
-        </div>
-    </x-slot>
+    <div class="mx-auto max-w-[1200px] space-y-6 px-4 py-8 sm:px-8">
+        <x-page-header titre="Mes véhicules" surtitre="Flotte"
+            soustitre="Gérez votre flotte et sa disponibilité pour vos prochains départs.">
+            <x-ui.button :href="route('transporteur.vehicules.create')"><x-ui.icon>add</x-ui.icon> Ajouter un véhicule</x-ui.button>
+        </x-page-header>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @include('transporteur._menu')
-
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-                @if ($vehicules->isEmpty())
-                    <p class="p-6 text-gray-600 dark:text-gray-300">
-                        Aucun véhicule pour le moment.
-                        <a href="{{ route('transporteur.vehicules.create') }}" class="text-indigo-600 hover:underline">Ajouter votre premier véhicule</a>.
-                    </p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                            <thead class="bg-gray-50 dark:bg-gray-900/40 text-left text-gray-600 dark:text-gray-300">
-                                <tr>
-                                    <th class="px-4 py-3 font-medium">Immatriculation</th>
-                                    <th class="px-4 py-3 font-medium">Marque</th>
-                                    <th class="px-4 py-3 font-medium">Type</th>
-                                    <th class="px-4 py-3 font-medium">Capacité</th>
-                                    <th class="px-4 py-3 font-medium">Trajets</th>
-                                    <th class="px-4 py-3 font-medium text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-200">
-                                @foreach ($vehicules as $vehicule)
-                                    <tr>
-                                        <td class="px-4 py-3 font-medium">{{ $vehicule->immatriculation }}</td>
-                                        <td class="px-4 py-3">{{ $vehicule->marque }}</td>
-                                        <td class="px-4 py-3">{{ ucfirst($vehicule->type_vehicule) }}</td>
-                                        <td class="px-4 py-3">{{ $vehicule->capacite }} places</td>
-                                        <td class="px-4 py-3">{{ $vehicule->trajets_count }}</td>
-                                        <td class="px-4 py-3 text-right whitespace-nowrap">
-                                            <a href="{{ route('transporteur.vehicules.edit', $vehicule) }}"
-                                               class="text-indigo-600 hover:underline mr-3">Modifier</a>
-                                            <form method="POST" action="{{ route('transporteur.vehicules.destroy', $vehicule) }}"
-                                                  class="inline" onsubmit="return confirm('Supprimer ce véhicule ?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Supprimer</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+        {{-- Chiffres clés --}}
+        <section class="grid grid-cols-1 gap-gutter md:grid-cols-3">
+            <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
+                <div class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Total véhicules</div>
+                <div class="mt-1 font-headline-lg text-headline-lg">{{ $stats['total'] }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant">unités enregistrées</div>
             </div>
+            <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
+                <div class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Véhicules actifs</div>
+                <div class="mt-1 font-headline-lg text-headline-lg">{{ $stats['actifs'] }}</div>
+                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+                    <div class="h-full rounded-full bg-primary-container" style="width: {{ $pourcentage }}%"></div>
+                </div>
+                <div class="mt-1 font-body-sm text-body-sm text-on-surface-variant">{{ $pourcentage }}% opérationnels</div>
+            </div>
+            <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
+                <div class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Capacité totale</div>
+                <div class="mt-1 font-headline-lg text-headline-lg">{{ $stats['capacite'] }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant">places au total</div>
+            </div>
+        </section>
 
-            <div class="mt-4">{{ $vehicules->links() }}</div>
-        </div>
+        {{-- Filtres --}}
+        <form method="GET" action="{{ route('transporteur.vehicules.index') }}" class="flex flex-wrap items-end gap-4">
+            <div class="w-52">
+                <x-input-label for="type" value="Type" />
+                <select id="type" name="type" onchange="this.form.submit()"
+                    class="mt-1 block min-h-[48px] w-full rounded-lg border border-[#D1D5DB] bg-white px-4 font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/15">
+                    <option value="">Tous les types</option>
+                    @foreach (\App\Models\Vehicule::TYPES as $type)
+                        <option value="{{ $type }}" @selected(request('type') === $type)>{{ \App\Models\Vehicule::libelleType($type) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="w-52">
+                <x-input-label for="statut" value="Statut" />
+                <select id="statut" name="statut" onchange="this.form.submit()"
+                    class="mt-1 block min-h-[48px] w-full rounded-lg border border-[#D1D5DB] bg-white px-4 font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/15">
+                    <option value="">Tous les statuts</option>
+                    <option value="actif" @selected(request('statut') === 'actif')>Actif</option>
+                    <option value="en_maintenance" @selected(request('statut') === 'en_maintenance')>En maintenance</option>
+                </select>
+            </div>
+            @if ($filtreActif)
+                <a href="{{ route('transporteur.vehicules.index') }}" class="pb-3 font-label-lg text-label-lg text-primary-container hover:underline">Réinitialiser les filtres</a>
+            @endif
+        </form>
+
+        {{-- Flotte --}}
+        @if ($vehicules->isEmpty())
+            <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-10 text-center shadow-card">
+                <x-ui.icon class="text-outline">search_off</x-ui.icon>
+                <h2 class="mt-2 font-headline-sm text-headline-sm">Aucun véhicule trouvé</h2>
+                <p class="mx-auto mt-1 max-w-md font-body-md text-body-md text-on-surface-variant">
+                    {{ $filtreActif ? 'Essayez de modifier vos filtres pour afficher les véhicules de votre flotte.' : 'Ajoutez votre premier véhicule pour pouvoir créer des trajets.' }}
+                </p>
+            </div>
+        @else
+            <div class="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3">
+                @foreach ($vehicules as $vehicule)
+                    <article class="flex flex-col rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="font-headline-sm text-headline-sm">{{ $vehicule->immatriculation }}</h2>
+                                <p class="font-body-md text-body-md text-on-surface-variant">
+                                    {{ \App\Models\Vehicule::libelleType($vehicule->type_vehicule) }} · {{ $vehicule->capacite }} pl. ({{ $vehicule->marque }})
+                                </p>
+                            </div>
+                            @if ($vehicule->estActif())
+                                <x-ui.badge tone="success">Actif</x-ui.badge>
+                            @else
+                                <x-ui.badge tone="warning">En maintenance</x-ui.badge>
+                            @endif
+                        </div>
+
+                        <div class="mt-4 flex-1 rounded-lg bg-surface-container-low p-3">
+                            @if ($vehicule->estActif())
+                                <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Prochain départ</div>
+                                @if ($vehicule->prochainTrajet)
+                                    <div class="font-label-lg text-label-lg">
+                                        {{ $vehicule->prochainTrajet->ville_depart }} → {{ $vehicule->prochainTrajet->ville_arrivee }}
+                                    </div>
+                                    <div class="font-body-sm text-body-sm text-on-surface-variant">
+                                        {{ $vehicule->prochainTrajet->date_depart->translatedFormat('D d M') }}, {{ substr($vehicule->prochainTrajet->heure_depart, 0, 5) }}
+                                    </div>
+                                @else
+                                    <div class="font-body-md text-body-md text-on-surface-variant">Aucun départ programmé</div>
+                                @endif
+                            @else
+                                <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Note de maintenance</div>
+                                <div class="font-body-md text-body-md">{{ $vehicule->note_maintenance ?: 'Aucune précision.' }}</div>
+                            @endif
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between">
+                            <x-ui.button :href="route('transporteur.vehicules.edit', $vehicule)" variant="light"><x-ui.icon>edit</x-ui.icon> Modifier</x-ui.button>
+                            <form method="POST" action="{{ route('transporteur.vehicules.destroy', $vehicule) }}"
+                                  onsubmit="return confirm('Supprimer ce véhicule ?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" title="Supprimer" class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-error hover:bg-error-container/50">
+                                    <x-ui.icon>delete</x-ui.icon>
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-app-layout>
