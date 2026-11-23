@@ -1,5 +1,5 @@
 @if (request()->routeIs('home'))
-    <footer class="border-t border-outline-variant/40 bg-surface-container-low">
+    <footer class="print:hidden border-t border-outline-variant/40 bg-surface-container-low">
         <div class="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 sm:px-8 md:grid-cols-3">
             <div>
                 <div class="font-headline-sm text-headline-sm font-extrabold text-primary-container">{{ config('app.name') }}</div>
@@ -38,7 +38,7 @@
         </div>
     </footer>
 @else
-    <footer class="mt-12 border-t border-outline-variant/40 bg-surface-container-lowest">
+    <footer class="print:hidden mt-12 border-t border-outline-variant/40 bg-surface-container-lowest">
         <div class="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-5 font-body-sm text-body-sm text-on-surface-variant sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <span>
                 <span class="font-headline-sm font-extrabold text-primary-container">{{ config('app.name') }}</span>

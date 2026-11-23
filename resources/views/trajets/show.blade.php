@@ -2,67 +2,106 @@
     $vehicule = $trajet->vehicule;
     $libres = max(0, $vehicule->capacite - count($occupes));
     $user = auth()->user();
-    $reservationOuverte = Route::has('voyageur.reservations.store');
-    $selectionnable = $user?->estVoyageur() && $reservationOuverte && $libres > 0;
+    $selectionnable = $user?->estVoyageur() && Route::has('voyageur.reservations.store') && $libres > 0;
+    $numeros = $vehicule->sieges->pluck('numero', 'id');
+    $compagnie = $trajet->transporteur->nom_compagnie ?? 'Transporteur';
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <a href="{{ route('trajets.index') }}" class="text-sm text-indigo-600 hover:underline">← Retour aux résultats</a>
-        <h1 class="mt-1 font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ $trajet->ville_depart }} → {{ $trajet->ville_arrivee }}
-        </h1>
-    </x-slot>
+    <div class="mx-auto max-w-[1200px] space-y-6 px-4 py-8 sm:px-8">
+        <a href="{{ route('trajets.index') }}" class="inline-flex items-center gap-1 font-label-lg text-label-lg text-primary-container hover:underline">
+            <x-ui.icon>arrow_back</x-ui.icon> Retour aux résultats de recherche
+        </a>
 
-    <div class="py-8">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <x-voyageur.etapes :actuelle="2" />
 
-            {{-- Informations du trajet --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 space-y-4 lg:col-span-1 h-fit">
+        {{-- En-tête du trajet --}}
+        <section class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-6 shadow-card">
+            <div class="flex flex-wrap items-start justify-between gap-6">
                 <div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Départ</div>
-                    <div class="font-semibold">{{ $trajet->date_depart->translatedFormat('l d F Y') }}</div>
-                    <div class="text-lg font-bold">{{ substr($trajet->heure_depart, 0, 5) }}</div>
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.badge tone="success"><x-ui.icon>event_seat</x-ui.icon> {{ $libres }} place(s) restante(s)</x-ui.badge>
+                        <x-ui.badge tone="warning"><x-ui.icon>verified</x-ui.icon> Transporteur validé</x-ui.badge>
+                    </div>
+                    <h1 class="mt-3 font-headline-lg-mobile text-headline-lg-mobile sm:font-headline-lg sm:text-headline-lg">
+                        {{ $trajet->ville_depart }} → {{ $trajet->ville_arrivee }}
+                    </h1>
                 </div>
-                <div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Transporteur</div>
-                    <div class="font-semibold">{{ $trajet->transporteur->nom_compagnie ?? 'Transporteur' }}</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Véhicule</div>
-                    <div class="font-semibold">{{ ucfirst($vehicule->type_vehicule) }} · {{ $vehicule->marque }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ $vehicule->capacite }} places</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Prix par place</div>
-                    <div class="text-2xl font-bold text-indigo-600">{{ number_format($trajet->prix_unitaire, 0, ',', ' ') }} FCFA</div>
-                </div>
-                <div>
-                    @if ($libres === 0)
-                        <span class="inline-flex rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">Complet</span>
-                    @else
-                        <span class="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">{{ $libres }} place(s) restante(s)</span>
-                    @endif
+
+                <div class="flex items-center gap-3 rounded-xl bg-surface-container-low p-4">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-container font-headline-sm text-headline-sm text-on-primary">
+                        {{ mb_strtoupper(mb_substr($compagnie, 0, 2)) }}
+                    </span>
+                    <div>
+                        <div class="font-headline-sm text-headline-sm">{{ $compagnie }}</div>
+                        <div class="font-body-sm text-body-sm text-on-surface-variant">
+                            {{ ucfirst($vehicule->type_vehicule) }} · {{ $vehicule->marque }} · {{ $vehicule->capacite }} places
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- Plan des sièges --}}
-            <form method="POST"
-                  action="{{ $selectionnable ? route('voyageur.reservations.store', $trajet) : '#' }}"
-                  x-data="{ selection: [], prix: {{ $trajet->prix_unitaire }}, max: {{ \App\Services\ReservationService::MAX_SIEGES_PAR_RESERVATION }} }"
-                  class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 lg:col-span-2">
-                @csrf
+            <div class="mt-5 grid gap-4 rounded-xl bg-surface-container-low p-4 sm:grid-cols-3">
+                <div class="flex items-center gap-3">
+                    <x-ui.icon class="text-primary-container">calendar_month</x-ui.icon>
+                    <div>
+                        <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Date du trajet</div>
+                        <div class="font-label-lg text-label-lg">{{ $trajet->date_depart->translatedFormat('l d F Y') }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <x-ui.icon class="text-primary-container">schedule</x-ui.icon>
+                    <div>
+                        <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Heure de départ</div>
+                        <div class="font-label-lg text-label-lg">{{ substr($trajet->heure_depart, 0, 5) }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <x-ui.icon class="text-primary-container">payments</x-ui.icon>
+                    <div>
+                        <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Prix par place</div>
+                        <div class="font-label-lg text-label-lg">{{ number_format($trajet->prix_unitaire, 0, ',', ' ') }} FCFA</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                <h2 class="text-lg font-semibold">Plan du véhicule</h2>
+        <form method="POST"
+              action="{{ $selectionnable ? route('voyageur.reservations.store', $trajet) : '#' }}"
+              x-data="{
+                  selection: [],
+                  prix: {{ $trajet->prix_unitaire }},
+                  max: {{ \App\Services\ReservationService::MAX_SIEGES_PAR_RESERVATION }},
+                  numeros: @js($numeros),
+                  get libelleSieges() { return this.selection.map(id => this.numeros[id]).sort((a, b) => a - b).join(', '); },
+                  get total() { return new Intl.NumberFormat('fr-FR').format(this.selection.length * this.prix) + ' FCFA'; }
+              }"
+              class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+            @csrf
 
-                <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span class="inline-flex items-center gap-2"><span class="h-4 w-4 rounded border border-green-500 bg-green-50"></span> Libre</span>
-                    <span class="inline-flex items-center gap-2"><span class="h-4 w-4 rounded bg-indigo-600"></span> Votre choix</span>
-                    <span class="inline-flex items-center gap-2"><span class="h-4 w-4 rounded bg-gray-300 dark:bg-gray-600"></span> Occupé</span>
+            {{-- Plan du véhicule --}}
+            <section class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-6 shadow-card">
+                <p class="font-label-md text-label-md uppercase tracking-wider text-primary-container">Configuration du véhicule</p>
+                <h2 class="mt-1 font-headline-md text-headline-md">Sélectionnez votre siège dans le véhicule</h2>
+                <p class="font-body-md text-body-md text-on-surface-variant">Cliquez sur un siège libre pour le réserver.</p>
+
+                <div class="mt-4 flex flex-wrap gap-4 rounded-xl bg-surface-container-low p-3 font-label-md text-label-md text-on-surface-variant">
+                    <span class="inline-flex items-center gap-2"><span class="h-5 w-5 rounded-md border border-primary-container bg-white"></span> Libre</span>
+                    <span class="inline-flex items-center gap-2"><span class="h-5 w-5 rounded-md bg-primary-container"></span> Votre sélection</span>
+                    <span class="inline-flex items-center gap-2"><span class="h-5 w-5 rounded-md bg-surface-container-high"></span> Occupé</span>
+                    <span class="inline-flex items-center gap-2"><span class="h-5 w-5 rounded-md bg-inverse-surface"></span> Cabine chauffeur</span>
                 </div>
 
-                <div class="mt-6 mx-auto max-w-xs rounded-2xl border-2 border-gray-300 dark:border-gray-600 p-4">
-                    <div class="mb-3 text-center text-xs text-gray-500 dark:text-gray-400">Avant du véhicule</div>
+                <div class="mx-auto mt-6 max-w-sm rounded-3xl border-2 border-outline-variant bg-surface-container-low p-4">
+                    <div class="mb-4 flex items-center justify-between font-label-sm text-label-sm uppercase text-on-surface-variant">
+                        <span class="inline-flex items-center gap-1"><x-ui.icon>directions_bus</x-ui.icon> Avant du véhicule</span>
+                        <span>Porte d'embarquement</span>
+                    </div>
+
+                    <div class="mb-3 flex h-14 w-24 flex-col items-center justify-center rounded-lg bg-inverse-surface text-inverse-on-surface">
+                        <x-ui.icon>sports_motorsports</x-ui.icon>
+                        <span class="font-label-sm text-label-sm">Chauffeur</span>
+                    </div>
 
                     <div class="space-y-2">
                         @foreach ($vehicule->sieges->chunk(4) as $rangee)
@@ -73,66 +112,118 @@
                                     @endif
 
                                     @if (in_array($siege->id, $occupes))
-                                        <span title="Déjà réservé"
-                                              class="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-md bg-gray-300 text-sm text-gray-500 dark:bg-gray-600 dark:text-gray-400">
-                                            {{ $siege->numero }}
+                                        <span title="Déjà réservé" class="flex h-14 w-14 cursor-not-allowed flex-col items-center justify-center rounded-lg bg-surface-container-high text-outline">
+                                            <x-ui.icon>lock</x-ui.icon>
+                                            <span class="font-label-sm text-label-sm">{{ str_pad($siege->numero, 2, '0', STR_PAD_LEFT) }}</span>
                                         </span>
                                     @elseif ($selectionnable)
                                         <label class="cursor-pointer">
                                             <input type="checkbox" name="sieges[]" value="{{ $siege->id }}" x-model="selection" class="peer sr-only"
-                                                   :disabled="selection.length >= max && ! selection.includes('{{ $siege->id }}')">
-                                            <span class="flex h-11 w-11 items-center justify-center rounded-md border border-green-500 bg-green-50 text-sm font-medium text-green-800 hover:bg-green-100 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-disabled:cursor-not-allowed peer-disabled:opacity-40">
-                                                {{ $siege->numero }}
+                                                   x-bind:disabled="selection.length >= max && ! selection.includes('{{ $siege->id }}')">
+                                            <span class="flex h-14 w-14 flex-col items-center justify-center rounded-lg border border-primary-container bg-white text-on-surface transition hover:bg-primary-fixed/40 peer-checked:bg-primary-container peer-checked:text-on-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-40">
+                                                <x-ui.icon>event_seat</x-ui.icon>
+                                                <span class="font-label-sm text-label-sm">{{ str_pad($siege->numero, 2, '0', STR_PAD_LEFT) }}</span>
                                             </span>
                                         </label>
                                     @else
-                                        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-green-500 bg-green-50 text-sm font-medium text-green-800">
-                                            {{ $siege->numero }}
+                                        <span class="flex h-14 w-14 flex-col items-center justify-center rounded-lg border border-primary-container bg-white text-on-surface">
+                                            <x-ui.icon>event_seat</x-ui.icon>
+                                            <span class="font-label-sm text-label-sm">{{ str_pad($siege->numero, 2, '0', STR_PAD_LEFT) }}</span>
                                         </span>
                                     @endif
                                 @endforeach
                             </div>
                         @endforeach
                     </div>
+
+                    <p class="mt-4 text-center font-label-sm text-label-sm text-on-surface-variant">Arrière du véhicule</p>
                 </div>
 
                 @error('sieges')
-                    <p class="mt-4 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-4 text-sm text-error">{{ $message }}</p>
                 @enderror
 
-                @if ($selectionnable)
-                    <div class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                <span x-text="selection.length"></span> place(s) choisie(s)
-                            </div>
-                            <div class="text-xl font-bold text-indigo-600"
-                                 x-text="new Intl.NumberFormat('fr-FR').format(selection.length * prix) + ' FCFA'"></div>
-                        </div>
-                        <x-primary-button x-bind:disabled="selection.length === 0" class="disabled:cursor-not-allowed disabled:opacity-50">
-                            Réserver
-                        </x-primary-button>
+                <div class="mt-6 flex items-start gap-3 rounded-xl bg-surface-container-low p-4">
+                    <x-ui.icon class="text-primary-container">schedule</x-ui.icon>
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm">Ponctualité et embarquement</h3>
+                        <p class="font-body-md text-body-md text-on-surface-variant">
+                            Présentez-vous en gare 30 minutes avant le départ, avec votre QR code et une pièce d'identité valide.
+                        </p>
                     </div>
-                    <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                        Vos sièges sont retenus {{ \App\Models\Reservation::DELAI_EXPIRATION_MINUTES }} minutes pour vous laisser le temps de payer.
-                        Maximum {{ \App\Services\ReservationService::MAX_SIEGES_PAR_RESERVATION }} sièges par réservation.
+                </div>
+            </section>
+
+            {{-- Récapitulatif --}}
+            <aside class="h-fit space-y-4 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-6 shadow-card lg:sticky lg:top-24">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-headline-md text-headline-md">Récapitulatif</h2>
+                    <x-ui.badge x-text="selection.length + (selection.length > 1 ? ' places' : ' place')">0 place</x-ui.badge>
+                </div>
+
+                <div class="rounded-xl bg-surface-container-low p-4">
+                    <div class="font-label-lg text-label-lg">{{ $trajet->ville_depart }} → {{ $trajet->ville_arrivee }}</div>
+                    <div class="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+                        {{ $trajet->date_depart->translatedFormat('D d M Y') }} · Départ {{ substr($trajet->heure_depart, 0, 5) }}
+                    </div>
+                    <div class="font-body-sm text-body-sm text-on-surface-variant">{{ ucfirst($vehicule->type_vehicule) }} · {{ $compagnie }}</div>
+                </div>
+
+                <div class="rounded-xl bg-primary-container p-4 text-on-primary">
+                    <div class="font-label-sm text-label-sm uppercase text-on-primary-container">Siège(s) sélectionné(s)</div>
+                    <div class="mt-1 font-headline-md text-headline-md" x-show="selection.length > 0" x-text="libelleSieges"></div>
+                    <div class="mt-1 font-body-md text-body-md" x-show="selection.length === 0">Aucun siège sélectionné</div>
+                </div>
+
+                @if ($user)
+                    <div class="flex items-center gap-3 rounded-xl bg-surface-container-low p-3">
+                        <x-ui.icon class="text-primary-container">account_circle</x-ui.icon>
+                        <div>
+                            <div class="font-label-lg text-label-lg">{{ $user->name }}</div>
+                            @if ($user->telephone)
+                                <div class="font-body-sm text-body-sm text-on-surface-variant">+221 {{ \App\Support\Telephone::formater($user->telephone) }}</div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <dl class="space-y-2 font-body-md text-body-md">
+                    <div class="flex justify-between"><dt class="text-on-surface-variant">Tarif par place</dt><dd>{{ number_format($trajet->prix_unitaire, 0, ',', ' ') }} FCFA</dd></div>
+                    <div class="flex justify-between"><dt class="text-on-surface-variant">Frais de réservation</dt><dd>0 FCFA</dd></div>
+                </dl>
+
+                <div class="rounded-xl bg-surface-container-low p-4">
+                    <div class="font-label-sm text-label-sm uppercase text-on-surface-variant">Total à payer</div>
+                    <div class="font-headline-lg text-headline-lg text-primary-container" x-text="total">0 FCFA</div>
+                </div>
+
+                @if ($selectionnable)
+                    <x-primary-button class="w-full" x-bind:disabled="selection.length === 0">
+                        Continuer vers le paiement <x-ui.icon>arrow_forward</x-ui.icon>
+                    </x-primary-button>
+                    <p class="text-center font-label-sm text-label-sm text-on-surface-variant">
+                        Vos sièges sont retenus {{ \App\Models\Reservation::DELAI_EXPIRATION_MINUTES }} minutes.
+                        Maximum {{ \App\Services\ReservationService::MAX_SIEGES_PAR_RESERVATION }} sièges.
                     </p>
                 @elseif ($libres === 0)
-                    <p class="mt-6 text-sm font-medium text-red-600">Ce trajet est complet.</p>
+                    <p class="rounded-lg bg-error-container px-4 py-3 text-center font-label-lg text-label-lg text-on-error-container">Ce trajet est complet.</p>
                 @elseif (! $user)
-                    <div class="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Connectez-vous pour choisir vos sièges et réserver.</p>
-                        <div class="mt-3 flex gap-3">
-                            <a href="{{ route('login') }}"
-                               class="inline-flex items-center px-4 py-2 bg-indigo-600 rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">Se connecter</a>
-                            <a href="{{ route('register') }}"
-                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">Créer un compte</a>
-                        </div>
+                    <div class="space-y-2">
+                        <p class="font-body-md text-body-md text-on-surface-variant">Connectez-vous pour choisir vos sièges et réserver.</p>
+                        <x-ui.button :href="route('login')" class="w-full">Se connecter</x-ui.button>
+                        <x-ui.button :href="route('register')" variant="outline" class="w-full">Créer un compte</x-ui.button>
                     </div>
                 @elseif (! $user->estVoyageur())
-                    <p class="mt-6 text-sm text-gray-600 dark:text-gray-400">Seuls les comptes voyageurs peuvent réserver.</p>
+                    <p class="rounded-lg bg-surface-container px-4 py-3 font-body-md text-body-md text-on-surface-variant">
+                        Seuls les comptes voyageurs peuvent réserver.
+                    </p>
                 @endif
-            </form>
-        </div>
+
+                <div class="flex items-center justify-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+                    <x-ui.badge tone="info">Wave</x-ui.badge>
+                    <x-ui.badge tone="warning">Orange Money</x-ui.badge>
+                </div>
+            </aside>
+        </form>
     </div>
 </x-app-layout>

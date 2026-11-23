@@ -9,7 +9,7 @@
         $espace = 'Espace voyageur';
         $role = 'Voyageur';
         $liens = [
-            $lien('dashboard', 'Tableau de bord'),
+            $lien('voyageur.dashboard', 'Tableau de bord', 'voyageur.dashboard'),
             $lien('trajets.index', 'Rechercher un trajet', 'trajets.*'),
             $lien('voyageur.reservations.index', 'Mes réservations', 'voyageur.reservations.*'),
         ];
@@ -47,7 +47,7 @@
     $estAdmin = (bool) $user?->estAdmin();
 @endphp
 
-<header x-data="{ ouvert: false }" class="sticky top-0 z-40 border-b border-outline-variant/40 bg-surface-container-lowest/90 backdrop-blur-md">
+<header x-data="{ ouvert: false }" class="print:hidden sticky top-0 z-40 border-b border-outline-variant/40 bg-surface-container-lowest/90 backdrop-blur-md">
     <div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-8">
         <div class="flex items-center gap-3">
             <a href="{{ route('home') }}" class="flex items-center gap-1 font-headline-sm text-headline-sm font-extrabold text-primary-container">
