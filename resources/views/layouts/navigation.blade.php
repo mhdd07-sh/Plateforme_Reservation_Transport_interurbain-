@@ -1,8 +1,8 @@
 @php
     $user = auth()->user();
 
-    $lien = fn (string $route, string $label, ?string $motif = null) => Route::has($route)
-        ? ['url' => route($route), 'actif' => request()->routeIs($motif ?? $route), 'label' => $label]
+        $lien = fn (string $route, string $label, ?string $motif = null, int $badge = 0) => Route::has($route)
+        ? ['url' => route($route), 'actif' => request()->routeIs($motif ?? $route), 'label' => $label, 'badge' => $badge]
         : null;
 
     if ($user?->estVoyageur()) {
@@ -24,9 +24,10 @@
     } elseif ($user?->estAdmin()) {
         $espace = 'Admin';
         $role = 'Super Admin';
+        $enAttente = \App\Models\Transporteur::where('statut', \App\Models\Transporteur::STATUT_EN_ATTENTE)->count();
         $liens = [
             $lien('admin.dashboard', 'Tableau de bord'),
-            $lien('admin.transporteurs.index', 'Transporteurs', 'admin.transporteurs.*'),
+            $lien('admin.transporteurs.index', 'Transporteurs', 'admin.transporteurs.*', $enAttente),
             $lien('admin.utilisateurs.index', 'Utilisateurs', 'admin.utilisateurs.*'),
             $lien('admin.trajets.index', 'Trajets', 'admin.trajets.*'),
             $lien('admin.reservations.index', 'Réservations', 'admin.reservations.*'),
@@ -64,8 +65,11 @@
             <nav class="hidden items-center gap-1 rounded-xl bg-surface-container-low p-1 md:flex">
                 @foreach ($liens as $l)
                     <a href="{{ $l['url'] }}"
-                       class="rounded-lg px-3 py-2 font-label-lg text-label-lg transition {{ $l['actif'] ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-container' }}">
+                    class="rounded-lg px-3 py-2 font-label-lg text-label-lg transition {{ $l['actif'] ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-container' }}">
                         {{ $l['label'] }}
+                        @if (($l['badge'] ?? 0) > 0)
+                            <span class="ml-1 rounded-full bg-secondary-container px-1.5 py-0.5 font-label-sm text-label-sm text-on-secondary-container">{{ $l['badge'] }}</span>
+                        @endif
                     </a>
                 @endforeach
             </nav>

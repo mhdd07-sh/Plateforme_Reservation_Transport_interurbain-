@@ -29,26 +29,6 @@
                 @endif
             </div>
 
-            {{-- Recherche --}}
-            <form method="GET" action="{{ $urlRecherche() }}"
-                  class="mt-10 grid grid-cols-1 items-end gap-4 rounded-xl bg-surface-container-lowest p-5 text-on-surface shadow-elevated sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                    <x-input-label for="depart" value="Départ" />
-                    <x-text-input id="depart" name="depart" type="text" list="villes" class="mt-1" placeholder="Dakar" />
-                </div>
-                <div>
-                    <x-input-label for="arrivee" value="Arrivée" />
-                    <x-text-input id="arrivee" name="arrivee" type="text" list="villes" class="mt-1" placeholder="Saint-Louis" />
-                </div>
-                <div>
-                    <x-input-label for="date" value="Date" />
-                    <x-text-input id="date" name="date" type="date" min="{{ now()->toDateString() }}" class="mt-1" />
-                </div>
-                <x-primary-button>
-                    Trouver un trajet
-                    <x-ui.icon>arrow_forward</x-ui.icon>
-                </x-primary-button>
-            </form>
 
             <datalist id="villes">
                 @foreach (config('transport.villes', []) as $ville)
