@@ -154,4 +154,36 @@ class Trajet extends Model
     {
         return $this->statut === self::STATUT_PUBLIE;
     }
+
+        /** Statut affiché : un trajet publié dont le départ est passé est « terminé ». */
+    public function statutAffiche(): string
+    {
+        if ($this->statut === self::STATUT_PUBLIE && $this->depart_le->isPast()) {
+            return self::STATUT_TERMINE;
+        }
+
+        return $this->statut;
+    }
+
+    public function libelleStatut(): string
+    {
+        return match ($this->statutAffiche()) {
+            self::STATUT_BROUILLON => 'Brouillon',
+            self::STATUT_PUBLIE => 'Publié',
+            self::STATUT_ANNULE => 'Annulé',
+            self::STATUT_TERMINE => 'Terminé',
+            default => $this->statut,
+        };
+    }
+
+    /** Couleur du badge (voir x-ui.badge). */
+    public function toneStatut(): string
+    {
+        return match ($this->statutAffiche()) {
+            self::STATUT_PUBLIE => 'success',
+            self::STATUT_ANNULE => 'danger',
+            self::STATUT_TERMINE => 'info',
+            default => 'neutral',
+        };
+    }
 }

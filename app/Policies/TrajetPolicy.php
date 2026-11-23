@@ -27,6 +27,12 @@ class TrajetPolicy
             ->exists();
     }
 
+    /** Détail d'un trajet et liste de ses passagers. */
+    public function view(User $user, Trajet $trajet): bool
+    {
+        return $this->proprietaire($user, $trajet);
+    }
+
     public function update(User $user, Trajet $trajet): Response
     {
         if (! $this->proprietaire($user, $trajet)) {
