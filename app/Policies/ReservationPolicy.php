@@ -24,4 +24,15 @@ class ReservationPolicy
             ? Response::allow()
             : Response::deny('Seule une réservation en attente peut être abandonnée.');
     }
+
+    public function payer(User $user, Reservation $reservation): Response
+    {
+        if ($reservation->user_id !== $user->id) {
+            return Response::deny();
+        }
+
+        return $reservation->statut === Reservation::STATUT_EN_ATTENTE
+            ? Response::allow()
+            : Response::deny("Cette réservation n'est plus en attente de paiement.");
+    }
 }

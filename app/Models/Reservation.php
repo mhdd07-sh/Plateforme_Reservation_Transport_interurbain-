@@ -164,4 +164,38 @@ class Reservation extends Model
         return $this->estConfirmee()
             && $this->trajet->depart_le->gt(now()->addHours(self::DELAI_ANNULATION_HEURES));
     }
+
+        /** Statut affiché au voyageur : une réservation confirmée dont le départ est passé est « terminée ». */
+    public function statutAffiche(): string
+    {
+        if ($this->statut === self::STATUT_CONFIRMEE && $this->trajet->depart_le->isPast()) {
+            return 'terminee';
+        }
+
+        return $this->statut;
+    }
+
+    public function libelleStatut(): string
+    {
+        return match ($this->statutAffiche()) {
+            'en_attente' => 'En attente de paiement',
+            'confirmee' => 'Confirmée',
+            'terminee' => 'Terminée',
+            'annulee' => 'Annulée',
+            'expiree' => 'Expirée',
+            default => $this->statut,
+        };
+    }
+
+    /** Couleur du badge (voir x-ui.badge). */
+    public function toneStatut(): string
+    {
+        return match ($this->statutAffiche()) {
+            'en_attente' => 'warning',
+            'confirmee' => 'success',
+            'terminee' => 'info',
+            'expiree' => 'danger',
+            default => 'neutral',
+        };
+    }
 }

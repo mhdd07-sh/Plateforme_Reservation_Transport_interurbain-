@@ -17,4 +17,14 @@ class Telephone
 
         return $chiffres;
     }
+
+    /** 771234567 => « 77 123 45 67 » */
+    public static function formater(?string $numero): string
+    {
+        if (! $numero || strlen($numero) !== 9) {
+            return (string) $numero;
+        }
+
+        return substr($numero, 0, 2) . ' ' . substr($numero, 2, 3) . ' ' . substr($numero, 5, 2) . ' ' . substr($numero, 7, 2);
+    }
 }
