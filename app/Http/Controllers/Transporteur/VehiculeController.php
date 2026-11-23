@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -16,23 +17,46 @@ class VehiculeController extends Controller
 {
     public function index(Request $request): View
     {
-        $vehicules = $request->user()->transporteur->vehicules()
-            ->withCount('trajets')
-            ->latest()
-            ->paginate(10);
+        $transporteur = $request->user()->transporteur;
 
-        return view('transporteur.vehicules.index', compact('vehicules'));
+        $filtres = $request->validate([
+            'type' => ['nullable', Rule::in(Vehicule::TYPES)],
+            'statut' => ['nullable', Rule::in([Vehicule::STATUT_ACTIF, Vehicule::STATUT_MAINTENANCE])],
+        ]);
+
+        $flotte = $transporteur->vehicules()->get();
+
+        $stats = [
+            'total' => $flotte->count(),
+            'actifs' => $flotte->where('statut', Vehicule::STATUT_ACTIF)->count(),
+            'capacite' => (int) $flotte->sum('capacite'),
+        ];
+
+        $vehicules = $transporteur->vehicules()
+            ->with('prochainTrajet')
+            ->when($filtres['type'] ?? null, fn ($q, $type) => $q->where('type_vehicule', $type))
+            ->when($filtres['statut'] ?? null, fn ($q, $statut) => $q->where('statut', $statut))
+            ->orderBy('immatriculation')
+            ->get();
+
+        return view('transporteur.vehicules.index', compact('vehicules', 'stats'));
     }
 
     public function create(): View
     {
-        return view('transporteur.vehicules.create', ['vehicule' => new Vehicule()]);
+        return view('transporteur.vehicules.create', ['vehicule' => new Vehicule(['statut' => Vehicule::STATUT_ACTIF])]);
     }
 
     public function store(VehiculeRequest $request): RedirectResponse
     {
+        $donnees = $request->validated();
+
+        if ($donnees['statut'] === Vehicule::STATUT_ACTIF) {
+            $donnees['note_maintenance'] = null;
+        }
+
         // Les sièges 1..capacité sont générés automatiquement (événement created du modèle).
-        $request->user()->transporteur->vehicules()->create($request->validated());
+        $request->user()->transporteur->vehicules()->create($donnees);
 
         return redirect()
             ->route('transporteur.vehicules.index')
@@ -50,8 +74,25 @@ class VehiculeController extends Controller
     {
         Gate::authorize('update', $vehicule);
 
-        DB::transaction(function () use ($request, $vehicule) {
-            $vehicule->update($request->validated());
+        $donnees = $request->validated();
+
+        if ($donnees['statut'] === Vehicule::STATUT_ACTIF) {
+            $donnees['note_maintenance'] = null;
+        }
+
+        DB::transaction(function () use ($donnees, $vehicule) {
+            // Un véhicule ne peut pas partir en maintenance s'il a encore des départs programmés.
+            if (
+                $donnees['statut'] === Vehicule::STATUT_MAINTENANCE
+                && $vehicule->statut !== Vehicule::STATUT_MAINTENANCE
+                && $vehicule->prochainTrajet()->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'statut' => 'Ce véhicule a des départs programmés : annulez-les ou changez de véhicule avant de le mettre en maintenance.',
+                ]);
+            }
+
+            $vehicule->update($donnees);
 
             if (! $vehicule->synchroniserSieges()) {
                 // L'exception annule la transaction (la capacité n'est pas modifiée).

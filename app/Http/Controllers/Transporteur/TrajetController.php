@@ -4,26 +4,72 @@ namespace App\Http\Controllers\Transporteur;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Transporteur\TrajetRequest;
+use App\Models\Reservation;
 use App\Models\Trajet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class TrajetController extends Controller
 {
+    /** Liste filtrable par statut affiché (tous, publie, brouillon, termine, annule). */
     public function index(Request $request): View
     {
+        $filtre = (string) $request->query('statut', 'tous');
+
         $trajets = $request->user()->transporteur->trajets()
             ->with('vehicule')
             ->withCount('siegesRetenus')
-            ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->input('statut')))
-            ->orderByDesc('date_depart')
-            ->orderByDesc('heure_depart')
-            ->paginate(10)
-            ->withQueryString();
+            ->limit(300)
+            ->get()
+            // Départs à venir d'abord (du plus proche au plus lointain), puis les passés (du plus récent au plus ancien).
+            ->sortBy(fn (Trajet $t) => $t->depart_le->isPast()
+                ? [1, -$t->depart_le->timestamp]
+                : [0, $t->depart_le->timestamp])
+            ->values();
 
-        return view('transporteur.trajets.index', compact('trajets'));
+        $compteurs = ['tous' => $trajets->count()];
+
+        foreach ([Trajet::STATUT_PUBLIE, Trajet::STATUT_BROUILLON, Trajet::STATUT_TERMINE, Trajet::STATUT_ANNULE] as $statut) {
+            $compteurs[$statut] = $trajets->filter(fn (Trajet $t) => $t->statutAffiche() === $statut)->count();
+        }
+
+        if ($filtre !== 'tous') {
+            $trajets = $trajets->filter(fn (Trajet $t) => $t->statutAffiche() === $filtre)->values();
+        }
+
+        // Pagination manuelle (le filtre porte sur le statut affiché, calculé en PHP).
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $pagine = new LengthAwarePaginator(
+            $trajets->forPage($page, 10)->values(),
+            $trajets->count(),
+            10,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
+
+        return view('transporteur.trajets.index', ['trajets' => $pagine, 'filtre' => $filtre, 'compteurs' => $compteurs]);
+    }
+
+    /** Détail d'un trajet : remplissage et liste des passagers. */
+    public function show(Trajet $trajet): View
+    {
+        Gate::authorize('view', $trajet);
+
+        $trajet->load(['vehicule', 'transporteur']);
+
+        $reservations = $trajet->reservations()
+            ->with(['user', 'sieges'])
+            ->latest()
+            ->get();
+
+        $occupes = $trajet->placesOccupees();
+
+        $revenus = (int) $reservations->where('statut', Reservation::STATUT_CONFIRMEE)->sum('montant_total');
+
+        return view('transporteur.trajets.show', compact('trajet', 'reservations', 'occupes', 'revenus'));
     }
 
     public function create(Request $request): View

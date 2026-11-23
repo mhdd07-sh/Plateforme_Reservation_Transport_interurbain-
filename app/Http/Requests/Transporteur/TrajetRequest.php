@@ -20,10 +20,12 @@ class TrajetRequest extends FormRequest
         $transporteurId = $this->user()->transporteur->id;
 
         return [
-            // Le véhicule doit appartenir au transporteur connecté.
+            // Le véhicule doit appartenir au transporteur connecté et ne pas être en maintenance.
             'vehicule_id' => [
                 'required',
-                Rule::exists('vehicules', 'id')->where('transporteur_id', $transporteurId),
+                Rule::exists('vehicules', 'id')
+                    ->where('transporteur_id', $transporteurId)
+                    ->where('statut', Vehicule::STATUT_ACTIF),
             ],
             'ville_depart' => ['required', 'string', 'max:80'],
             'ville_arrivee' => ['required', 'string', 'max:80', 'different:ville_depart'],
@@ -78,7 +80,7 @@ class TrajetRequest extends FormRequest
     {
         return [
             'ville_arrivee.different' => "La ville d'arrivée doit être différente de la ville de départ.",
-            'vehicule_id.exists' => 'Ce véhicule ne vous appartient pas.',
+            'vehicule_id.exists' => "Ce véhicule n'est pas disponible : il ne vous appartient pas ou il est en maintenance.",
         ];
     }
 }

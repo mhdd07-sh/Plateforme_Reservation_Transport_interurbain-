@@ -18,7 +18,6 @@ Route::middleware(['auth', 'role:transporteur'])
                 ->parameters(['vehicules' => 'vehicule']);
 
             Route::resource('trajets', TrajetController::class)
-                ->except('show')
                 ->parameters(['trajets' => 'trajet']);
 
             Route::post('trajets/{trajet}/publier', [TrajetController::class, 'publier'])->name('trajets.publier');
