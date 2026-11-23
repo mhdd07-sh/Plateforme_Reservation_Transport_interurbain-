@@ -49,6 +49,10 @@ class RechercheEtReservationTest extends TestCase
             ->get(route('voyageur.reservations.show', Reservation::first()))
             ->assertOk()
             ->assertSee(Reservation::first()->reference);
+
+        $this->actingAs($voyageur)
+            ->post(route('voyageur.reservations.store', $trajet), ['sieges' => [$siege]])
+            ->assertRedirect(route('voyageur.paiement.create', Reservation::first()));
     }
 
     public function test_un_voyageur_ne_voit_pas_la_reservation_d_un_autre(): void

@@ -42,4 +42,14 @@ class Paiement extends Model
     {
         return $this->statut_paiement === self::STATUT_REUSSI;
     }
+
+        public static function libelleMoyen(?string $moyen): string
+    {
+        return match ($moyen) {
+            self::MOYEN_WAVE => 'Wave',
+            self::MOYEN_ORANGE_MONEY => 'Orange Money',
+            self::MOYEN_CARTE => 'Carte bancaire',
+            default => '—',
+        };
+    }
 }

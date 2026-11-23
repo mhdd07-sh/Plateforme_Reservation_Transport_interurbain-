@@ -12,4 +12,13 @@ return [
         'Tambacounda', 'Kédougou', 'Kolda', 'Sédhiou', 'Ziguinchor', 'Matam',
     ],
 
+    /*
+    | Coordonnées du support affichées aux voyageurs.
+    | À REMPLACER par vos vraies coordonnées. Laissez vide pour masquer le bloc d'assistance.
+    */
+    'support' => [
+        'telephone' => '+221 33 800 00 00',
+        'whatsapp' => '221338000000',
+    ],
+
 ];

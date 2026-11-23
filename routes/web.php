@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RechercheTrajetController;
+use Illuminate\Support\Facades\Route;
 
 // --- Pages publiques -------------------------------------------------------
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -20,9 +20,9 @@ Route::get('/dashboard', function () {
     return match (true) {
         $user->estAdmin() => redirect()->route('admin.dashboard'),
         $user->estTransporteur() => redirect()->route('transporteur.dashboard'),
-        default => view('dashboard'),
+        default => redirect()->route('voyageur.dashboard'),
     };
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
