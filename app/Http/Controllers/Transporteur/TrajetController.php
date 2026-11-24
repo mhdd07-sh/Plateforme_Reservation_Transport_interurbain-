@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use App\Exceptions\AnnulationImpossibleException;
+use App\Services\AnnulationService;
 
 class TrajetController extends Controller
 {
@@ -132,13 +134,25 @@ class TrajetController extends Controller
         return back()->with('succes', 'Trajet publié : il est maintenant visible des voyageurs.');
     }
 
-    public function annuler(Trajet $trajet): RedirectResponse
+        /** Annule un trajet publié : les réservations confirmées sont remboursées, les retenues libérées. */
+    public function annuler(Request $request, Trajet $trajet, AnnulationService $annulations): RedirectResponse
     {
         Gate::authorize('annuler', $trajet);
 
-        $trajet->update(['statut' => Trajet::STATUT_ANNULE]);
+        $donnees = $request->validate(
+            ['motif' => ['nullable', 'string', 'max:255'], 'confirmation' => ['accepted']],
+            ['confirmation.accepted' => "Cochez la case pour confirmer l'annulation."]
+        );
 
-        return back()->with('succes', 'Trajet annulé.');
+        try {
+            $bilan = $annulations->annulerTrajet($trajet, $donnees['motif'] ?? null);
+        } catch (AnnulationImpossibleException $e) {
+            return back()->with('erreur', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('transporteur.trajets.index')
+            ->with('succes', "Trajet annulé : {$bilan['remboursees']} réservation(s) remboursée(s), {$bilan['liberees']} retenue(s) libérée(s).");
     }
 
     public function destroy(Trajet $trajet): RedirectResponse

@@ -55,19 +55,15 @@
                             @endcan
 
                             @can('annuler', $trajet)
-                                <form method="POST" action="{{ route('transporteur.trajets.annuler', $trajet) }}"
-                                      onsubmit="return confirm('Annuler ce trajet ?')">
-                                    @csrf
-                                    <button type="submit" title="Annuler le trajet"
-                                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-secondary hover:bg-secondary-container/20">
-                                        <x-ui.icon>event_busy</x-ui.icon>
-                                    </button>
-                                </form>
+                                <a href="{{ route('transporteur.trajets.show', $trajet) }}#annulation" title="Annuler le trajet"
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-secondary hover:bg-secondary-container/20">
+                                <x-ui.icon>event_busy</x-ui.icon>
+                                </a>
                             @endcan
 
                             @can('delete', $trajet)
                                 <form method="POST" action="{{ route('transporteur.trajets.destroy', $trajet) }}"
-                                      onsubmit="return confirm('Supprimer ce trajet ?')">
+                                    onsubmit="return confirm('Supprimer ce trajet ?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" title="Supprimer"

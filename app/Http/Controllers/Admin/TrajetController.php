@@ -11,6 +11,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Exceptions\AnnulationImpossibleException;
+use App\Services\AnnulationService;
+
 
 class TrajetController extends Controller
 {
@@ -106,5 +109,28 @@ class TrajetController extends Controller
         );
 
         return back()->with('succes', 'Trajet retiré de la vente (repassé en brouillon).');
+    }
+
+        /** Annulation d'un trajet par l'administrateur (panne, incident) : réservations remboursées. */
+    public function annuler(Request $request, Trajet $trajet, AnnulationService $annulations): RedirectResponse
+    {
+        $donnees = $request->validate(
+            ['motif' => ['nullable', 'string', 'max:255'], 'confirmation' => ['accepted']],
+            ['confirmation.accepted' => "Cochez la case pour confirmer l'annulation."]
+        );
+
+        try {
+            $bilan = $annulations->annulerTrajet($trajet, $donnees['motif'] ?? null);
+        } catch (AnnulationImpossibleException $e) {
+            return back()->with('erreur', $e->getMessage());
+        }
+
+        JournalAdmin::enregistrer(
+            'trajet_annule',
+            "Trajet annulé : {$trajet->ville_depart} → {$trajet->ville_arrivee} ({$bilan['remboursees']} remboursement(s))",
+            $trajet
+        );
+
+        return back()->with('succes', "Trajet annulé : {$bilan['remboursees']} réservation(s) remboursée(s), {$bilan['liberees']} retenue(s) libérée(s).");
     }
 }

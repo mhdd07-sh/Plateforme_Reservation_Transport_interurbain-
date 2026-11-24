@@ -24,6 +24,53 @@
                 </form>
             @endcan
         </x-page-header>
+        
+        @if ($trajet->statut === 'annule')
+            <div class="rounded-lg bg-error-container px-4 py-3 font-body-md text-body-md text-on-error-container">
+                Trajet annulé{{ $trajet->motif_annulation ? ' : ' . $trajet->motif_annulation : '' }}.
+            </div>
+        @endif
+
+        @can('annuler', $trajet)
+            @php $reservationsActives = $reservations->whereIn('statut', ['en_attente', 'confirmee'])->count(); @endphp
+
+            <section id="annulation" class="rounded-xl border border-error/30 bg-error-container/40 p-6"
+                     x-data="{ ouvert: {{ $errors->any() ? 'true' : 'false' }} }">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="inline-flex items-center gap-2 font-headline-sm text-headline-sm text-error">
+                            <x-ui.icon>warning</x-ui.icon> Annuler ce trajet
+                        </h2>
+                        <p class="font-body-md text-body-md text-on-error-container">
+                            Les voyageurs concernés sont remboursés automatiquement et le trajet n'est plus proposé.
+                        </p>
+                    </div>
+                    <x-ui.button type="button" variant="danger" x-on:click="ouvert = ! ouvert">Annuler le trajet</x-ui.button>
+                </div>
+
+                <form method="POST" action="{{ route('transporteur.trajets.annuler', $trajet) }}" x-show="ouvert" x-cloak class="mt-4 space-y-4">
+                    @csrf
+                    <div>
+                        <x-input-label for="motif" value="Motif (communiqué aux voyageurs)" />
+                        <x-text-input id="motif" name="motif" type="text" maxlength="255" class="mt-1"
+                            :value="old('motif')" placeholder="Ex : panne du véhicule" />
+                        <x-input-error :messages="$errors->get('motif')" class="mt-2" />
+                    </div>
+
+                    <label class="flex items-start gap-3">
+                        <input type="checkbox" name="confirmation" value="1"
+                               class="mt-0.5 rounded border-[#D1D5DB] text-primary-container focus:ring-primary-container/30">
+                        <span class="font-body-md text-body-md text-on-error-container">
+                            Je confirme l'annulation.
+                            {{ $reservationsActives > 0 ? $reservationsActives . ' réservation(s) seront annulées et remboursées.' : 'Aucune réservation à rembourser.' }}
+                        </span>
+                    </label>
+                    <x-input-error :messages="$errors->get('confirmation')" />
+
+                    <x-ui.button type="submit" variant="danger">Confirmer l'annulation</x-ui.button>
+                </form>
+            </section>
+        @endcan
 
         <section class="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">

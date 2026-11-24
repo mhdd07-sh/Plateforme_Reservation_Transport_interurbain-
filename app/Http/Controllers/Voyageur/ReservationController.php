@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use App\Exceptions\AnnulationImpossibleException;
+use App\Services\AnnulationService;
 
 class ReservationController extends Controller
 {
@@ -85,5 +87,21 @@ class ReservationController extends Controller
         $reservation->annuler();
 
         return redirect()->route('voyageur.reservations.index')->with('succes', 'Réservation abandonnée, sièges libérés.');
+    }
+
+        /** Annule une réservation confirmée et rembourse le voyageur. */
+    public function annuler(Reservation $reservation, AnnulationService $annulations): RedirectResponse
+    {
+        Gate::authorize('annuler', $reservation);
+
+        try {
+            $annulations->annulerReservation($reservation);
+        } catch (AnnulationImpossibleException $e) {
+            return back()->with('erreur', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('voyageur.reservations.show', $reservation)
+            ->with('succes', 'Réservation annulée : ' . number_format($reservation->montant_total, 0, ',', ' ') . ' FCFA vous sont remboursés.');
     }
 }

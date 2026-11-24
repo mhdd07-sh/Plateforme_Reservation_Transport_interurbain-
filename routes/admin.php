@@ -29,4 +29,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('trajets', [TrajetController::class, 'index'])->name('trajets.index');
         Route::get('trajets/{trajet}', [TrajetController::class, 'show'])->name('trajets.show');
         Route::post('trajets/{trajet}/retirer', [TrajetController::class, 'retirer'])->name('trajets.retirer');
+
+                Route::post('trajets/{trajet}/annuler', [TrajetController::class, 'annuler'])->name('trajets.annuler');
     });
