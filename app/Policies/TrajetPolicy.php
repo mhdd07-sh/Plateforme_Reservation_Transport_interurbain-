@@ -59,6 +59,7 @@ class TrajetPolicy
             : Response::deny('Seul un trajet en brouillon peut être publié.');
     }
 
+        /** Un trajet publié et à venir peut être annulé, même avec des réservations (elles sont remboursées). */
     public function annuler(User $user, Trajet $trajet): Response
     {
         if (! $this->proprietaire($user, $trajet)) {
@@ -69,9 +70,9 @@ class TrajetPolicy
             return Response::deny('Seul un trajet publié peut être annulé.');
         }
 
-        return $this->aReservationsActives($trajet)
-            ? Response::deny('Ce trajet a des réservations : annulation impossible pour le moment.')
-            : Response::allow();
+        return $trajet->depart_le->isFuture()
+            ? Response::allow()
+            : Response::deny('Ce trajet est déjà parti : il ne peut plus être annulé.');
     }
 
     public function delete(User $user, Trajet $trajet): Response

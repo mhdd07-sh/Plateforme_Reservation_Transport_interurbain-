@@ -33,10 +33,13 @@ class Reservation extends Model
         'operateur_paiement',
         'statut',
         'expire_at',
+        'annulee_le',
+        'motif_annulation',
     ];
 
     protected $casts = [
         'expire_at' => 'datetime',
+        'annulee_le' => 'datetime',
         'nombre_places' => 'integer',
         'montant_total' => 'integer',
     ];
@@ -137,11 +140,16 @@ class Reservation extends Model
         ]);
     }
 
-    public function annuler(): void
+     /** Annule la réservation et libère ses sièges (le remboursement est géré par AnnulationService). */
+    public function annuler(?string $motif = null): void
     {
-        DB::transaction(function () {
+        DB::transaction(function () use ($motif) {
             $this->libererSieges();
-            $this->update(['statut' => self::STATUT_ANNULEE]);
+            $this->update([
+                'statut' => self::STATUT_ANNULEE,
+                'annulee_le' => now(),
+                'motif_annulation' => $motif,
+            ]);
         });
     }
 

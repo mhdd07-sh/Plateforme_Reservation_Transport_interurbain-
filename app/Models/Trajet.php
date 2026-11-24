@@ -29,6 +29,7 @@ class Trajet extends Model
         'heure_depart',
         'prix_unitaire',
         'statut',
+        'motif_annulation',
     ];
 
     protected $casts = [

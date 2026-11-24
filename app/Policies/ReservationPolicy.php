@@ -35,4 +35,20 @@ class ReservationPolicy
             ? Response::allow()
             : Response::deny("Cette réservation n'est plus en attente de paiement.");
     }
+
+    /** Annulation avec remboursement d'une réservation confirmée. */
+    public function annuler(User $user, Reservation $reservation): Response
+    {
+        if ($reservation->user_id !== $user->id) {
+            return Response::deny();
+        }
+
+        if ($reservation->statut !== Reservation::STATUT_CONFIRMEE) {
+            return Response::deny('Seule une réservation confirmée peut être annulée.');
+        }
+
+        return $reservation->peutEtreAnnulee()
+            ? Response::allow()
+            : Response::deny("L'annulation n'est plus possible : le départ est dans moins de " . Reservation::DELAI_ANNULATION_HEURES . ' heures.');
+    }
 }
