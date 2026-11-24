@@ -18,6 +18,38 @@
             @endif
         </x-page-header>
 
+        @if ($trajet->statut === 'annule')
+            <div class="rounded-lg bg-error-container px-4 py-3 font-body-md text-body-md text-on-error-container">
+                Trajet annulé{{ $trajet->motif_annulation ? ' : ' . $trajet->motif_annulation : '' }}.
+            </div>
+        @endif
+
+        @if ($trajet->statut === 'publie' && $trajet->depart_le->isFuture())
+            <section class="rounded-xl border border-error/30 bg-error-container/40 p-6" x-data="{ ouvert: {{ $errors->any() ? 'true' : 'false' }} }">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="inline-flex items-center gap-2 font-headline-sm text-headline-sm text-error"><x-ui.icon>warning</x-ui.icon> Annuler ce trajet (incident)</h2>
+                        <p class="font-body-md text-body-md text-on-error-container">Les {{ $actives }} réservation(s) active(s) seront annulées et remboursées.</p>
+                    </div>
+                    <x-ui.button type="button" variant="danger" x-on:click="ouvert = ! ouvert">Annuler le trajet</x-ui.button>
+                </div>
+
+                <form method="POST" action="{{ route('admin.trajets.annuler', $trajet) }}" x-show="ouvert" x-cloak class="mt-4 space-y-4">
+                    @csrf
+                    <div>
+                        <x-input-label for="motif" value="Motif (communiqué aux voyageurs)" />
+                        <x-text-input id="motif" name="motif" type="text" maxlength="255" class="mt-1" :value="old('motif')" placeholder="Ex : panne technique" />
+                    </div>
+                    <label class="flex items-start gap-3">
+                        <input type="checkbox" name="confirmation" value="1" class="mt-0.5 rounded border-[#D1D5DB] text-primary-container focus:ring-primary-container/30">
+                        <span class="font-body-md text-body-md text-on-error-container">Je confirme l'annulation de ce trajet.</span>
+                    </label>
+                    <x-input-error :messages="$errors->get('confirmation')" />
+                    <x-ui.button type="submit" variant="danger">Confirmer l'annulation</x-ui.button>
+                </form>
+            </section>
+        @endif
+
         <section class="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
             <x-stat-card label="Véhicule" :valeur="$v->immatriculation" icone="directions_bus" tone="neutral"
                 :detail="\App\Models\Vehicule::libelleType($v->type_vehicule) . ' · ' . $v->marque" />

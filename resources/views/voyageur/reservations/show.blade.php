@@ -155,33 +155,62 @@
                         <p class="font-body-md text-body-md text-on-surface-variant">Présentez-vous 30 minutes avant le départ avec une pièce d'identité valide et ce QR code sur votre téléphone.</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-4 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
+                    <div class="flex items-start gap-4 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-card">
                     <x-ui.icon class="text-primary-container">event_busy</x-ui.icon>
                     <div>
                         <h2 class="font-headline-sm text-headline-sm">Besoin d'annuler ?</h2>
-                        <p class="font-body-md text-body-md text-on-surface-variant">
-                            L'annulation est possible jusqu'à {{ \App\Models\Reservation::DELAI_ANNULATION_HEURES }} heures avant le départ.
-                            @if (Route::has('voyageur.reservations.annuler') && $reservation->peutEtreAnnulee())
-                                <form method="POST" action="{{ route('voyageur.reservations.annuler', $reservation) }}" class="mt-2"
-                                      onsubmit="return confirm('Annuler cette réservation ?')">
-                                    @csrf
-                                    <button type="submit" class="font-label-lg text-label-lg text-error hover:underline">Annuler ma réservation</button>
-                                </form>
-                            @endif
-                        </p>
+
+                        @if ($reservation->peutEtreAnnulee())
+                            <p class="mt-1 font-body-md text-body-md text-on-surface-variant">
+                                Annulation possible jusqu'à {{ \App\Models\Reservation::DELAI_ANNULATION_HEURES }} heures avant le départ.
+                                Vous serez remboursé de {{ number_format($reservation->montant_total, 0, ',', ' ') }} FCFA via {{ $moyen }}.
+                            </p>
+                            <form method="POST" action="{{ route('voyageur.reservations.annuler', $reservation) }}" class="mt-3"
+                                onsubmit="return confirm('Annuler cette réservation ? Le remboursement intégral sera effectué.')">
+                                @csrf
+                                <x-ui.button type="submit" variant="danger"><x-ui.icon>event_busy</x-ui.icon> Annuler ma réservation</x-ui.button>
+                            </form>
+                        @elseif ($t->depart_le->isPast())
+                            <p class="mt-1 font-body-md text-body-md text-on-surface-variant">Ce voyage a eu lieu : l'annulation n'est plus possible.</p>
+                        @else
+                            <p class="mt-1 font-body-md text-body-md text-on-surface-variant">
+                                L'annulation n'est plus possible : le départ est dans moins de {{ \App\Models\Reservation::DELAI_ANNULATION_HEURES }} heures.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </section>
 
-        {{-- ================= ANNULÉE / EXPIRÉE ================= --}}
+            {{-- ================= ANNULÉE / EXPIRÉE ================= --}}
         @else
+            @php $rembourse = $reservation->paiement?->statut_paiement === \App\Models\Paiement::STATUT_REMBOURSE; @endphp
+
             <section class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-8 text-center shadow-card">
                 <x-ui.badge :tone="$reservation->toneStatut()">{{ $reservation->libelleStatut() }}</x-ui.badge>
                 <h1 class="mt-3 font-headline-md text-headline-md">{{ $t->ville_depart }} → {{ $t->ville_arrivee }}</h1>
+
                 <p class="mt-2 font-body-md text-body-md text-on-surface-variant">
-                    {{ $reservation->statut === 'expiree' ? 'Le délai de paiement est dépassé : les sièges ont été libérés.' : 'Cette réservation est annulée.' }}
+                    @if ($reservation->statut === 'expiree')
+                        Le délai de paiement est dépassé : les sièges ont été libérés.
+                    @else
+                        Cette réservation a été annulée{{ $reservation->annulee_le ? ' le ' . $reservation->annulee_le->translatedFormat('d F Y à H:i') : '' }}.
+                    @endif
                 </p>
-                <x-ui.button :href="route('trajets.show', $t)" class="mt-5">Réserver à nouveau</x-ui.button>
+
+                @if ($reservation->motif_annulation)
+                    <p class="mt-1 font-body-md text-body-md text-on-surface-variant">Motif : {{ $reservation->motif_annulation }}</p>
+                @endif
+
+                @if ($rembourse)
+                    <div class="mx-auto mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-fixed px-4 py-2 font-label-lg text-label-lg text-on-primary-fixed-variant">
+                        <x-ui.icon>payments</x-ui.icon>
+                        Remboursé : {{ number_format($reservation->montant_total, 0, ',', ' ') }} FCFA ({{ $moyen }})
+                    </div>
+                @endif
+
+                <div class="mt-5">
+                    <x-ui.button :href="route('trajets.index')">Rechercher un autre trajet</x-ui.button>
+                </div>
             </section>
         @endif
     </div>
