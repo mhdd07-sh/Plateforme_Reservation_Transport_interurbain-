@@ -21,6 +21,10 @@ Route::middleware(['auth', 'role:voyageur'])
         Route::post('reservations/{reservation}/abandonner', [ReservationController::class, 'abandonner'])
             ->name('reservations.abandonner');
 
+        Route::post('reservations/{reservation}/annuler', [ReservationController::class, 'annuler'])
+            ->middleware('throttle:10,1')
+            ->name('reservations.annuler');
+
         // Paiement (étape « Paiement » puis saisie du code)
         Route::get('reservations/{reservation}/paiement', [PaiementController::class, 'create'])->name('paiement.create');
         Route::post('reservations/{reservation}/paiement', [PaiementController::class, 'store'])
