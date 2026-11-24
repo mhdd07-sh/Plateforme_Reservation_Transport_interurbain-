@@ -5,7 +5,7 @@ use App\Http\Controllers\Voyageur\PaiementController;
 use App\Http\Controllers\Voyageur\ReservationController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:voyageur'])
+Route::middleware(['auth','verified', 'role:voyageur'])
     ->prefix('voyageur')
     ->name('voyageur.')
     ->group(function () {

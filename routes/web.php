@@ -22,7 +22,7 @@ Route::get('/dashboard', function () {
         $user->estTransporteur() => redirect()->route('transporteur.dashboard'),
         default => redirect()->route('voyageur.dashboard'),
     };
-})->middleware('auth')->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

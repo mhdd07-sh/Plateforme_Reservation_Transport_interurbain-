@@ -5,7 +5,7 @@ use App\Http\Controllers\Transporteur\TrajetController;
 use App\Http\Controllers\Transporteur\VehiculeController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:transporteur'])
+Route::middleware(['auth','verified', 'role:transporteur'])
     ->prefix('transporteur')
     ->name('transporteur.')
     ->group(function () {

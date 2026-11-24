@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\TransporteurController;
 use App\Http\Controllers\Admin\UtilisateurController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:admin'])
+Route::middleware(['auth','verified', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
