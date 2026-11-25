@@ -97,6 +97,7 @@ class TransporteurController extends Controller
             ]);
 
             $user->role = User::ROLE_TRANSPORTEUR;
+            $user->email_verified_at = now(); // créé par l'administrateur : adresse considérée comme vérifiée
             $user->save();
 
             return Transporteur::create([
