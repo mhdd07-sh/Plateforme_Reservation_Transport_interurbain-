@@ -31,7 +31,7 @@ class PaiementRequest extends FormRequest
 
         return [
             'moyen' => ['required', Rule::in(Paiement::MOYENS)],
-            'numero' => ['required', $carte ? 'digits_between:13,19' : 'regex:/^(70|75|76|77|78)[0-9]{7}$/'],
+            'numero' => ['required', $carte ? 'digits_between:13,19' : 'regex:' . Telephone::regex()],
             'accepte_cgv' => ['accepted'],
         ];
     }

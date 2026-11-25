@@ -91,15 +91,18 @@
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
 
-                <div>
+                                <div>
                     <div class="flex items-baseline justify-between">
                         <x-input-label for="telephone" value="Téléphone *" />
-                        <span class="font-label-sm text-label-sm text-on-surface-variant">Wave / Orange Money</span>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant"
+                        x-text="type === 'compagnie' ? 'Mobile ou fixe' : 'Wave / Orange Money'">Wave / Orange Money</span>
                     </div>
                     <div class="mt-1 flex">
                         <span class="inline-flex min-h-[48px] items-center rounded-l-lg border border-r-0 border-[#D1D5DB] bg-surface-container px-3 font-label-lg text-label-lg text-on-surface-variant">+221</span>
                         <x-text-input id="telephone" name="telephone" type="tel" class="rounded-l-none"
-                            :value="old('telephone')" placeholder="77 000 00 00" required autocomplete="tel" />
+                            :value="old('telephone')" placeholder="77 000 00 00"
+                            x-bind:placeholder="type === 'compagnie' ? '77 000 00 00 ou 33 800 00 00' : '77 000 00 00'"
+                            required autocomplete="tel" />
                     </div>
                     <x-input-error :messages="$errors->get('telephone')" class="mt-2" />
                 </div>

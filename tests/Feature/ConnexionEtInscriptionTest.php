@@ -132,4 +132,37 @@ class ConnexionEtInscriptionTest extends TestCase
         $this->post('/register', $this->donneesInscription(['telephone' => '12345']))
             ->assertSessionHasErrors('telephone');
     }
+
+        public function test_une_compagnie_peut_s_inscrire_avec_un_numero_fixe(): void
+    {
+        $this->post('/register', $this->donneesInscription([
+            'type_compte' => 'compagnie',
+            'nom_compagnie' => 'Sahel Voyage',
+            'numero_agrement' => 'AGR-777002',
+            'telephone' => '33 800 12 34',
+        ]))->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertSame('338001234', User::where('email', 'fatou.sow@exemple.sn')->first()->telephone);
+    }
+
+    public function test_un_voyageur_ne_peut_pas_utiliser_un_numero_fixe(): void
+    {
+        $this->post('/register', $this->donneesInscription(['telephone' => '33 800 12 34']))
+            ->assertSessionHasErrors('telephone');
+    }
+
+    public function test_un_transporteur_particulier_ne_peut_pas_utiliser_un_numero_fixe(): void
+    {
+        $this->post('/register', $this->donneesInscription(['type_compte' => 'particulier', 'telephone' => '33 800 12 34']))
+            ->assertSessionHasErrors('telephone');
+    }
+
+    public function test_connexion_par_numero_fixe(): void
+    {
+        $user = User::factory()->create(['telephone' => '338001234']);
+
+        $this->post('/login', ['identifiant' => '33 800 12 34', 'password' => 'password']);
+
+        $this->assertAuthenticatedAs($user);
+    }
 }

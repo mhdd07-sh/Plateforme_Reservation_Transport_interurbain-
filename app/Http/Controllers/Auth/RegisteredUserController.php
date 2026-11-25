@@ -35,12 +35,15 @@ class RegisteredUserController extends Controller
             'telephone' => Telephone::normaliser((string) $request->input('telephone')),
         ]);
 
+        // Une compagnie peut renseigner un numéro fixe ; les autres comptes doivent avoir un mobile.
+        $accepterFixe = $request->input('type_compte') === Transporteur::TYPE_COMPAGNIE;
+
         $donnees = $request->validate([
             'type_compte' => ['required', Rule::in(['voyageur', Transporteur::TYPE_PARTICULIER, Transporteur::TYPE_COMPAGNIE])],
             'prenom' => ['required', 'string', 'max:100'],
             'nom' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'telephone' => ['required', 'regex:/^(70|75|76|77|78)[0-9]{7}$/', 'unique:users,telephone'],
+            'telephone' => ['required', 'regex:' . Telephone::regex($accepterFixe), 'unique:users,telephone'],
             'password' => ['required', Rules\Password::min(8)],
             'accepte_cgu' => ['accepted'],
             'nom_compagnie' => ['nullable', 'required_if:type_compte,' . Transporteur::TYPE_COMPAGNIE, 'string', 'max:255'],
@@ -49,7 +52,9 @@ class RegisteredUserController extends Controller
                 Rule::unique('transporteurs', 'numero_agrement'),
             ],
         ], [
-            'telephone.regex' => 'Entrez un numéro sénégalais valide (ex. 77 123 45 67).',
+            'telephone.regex' => $accepterFixe
+                ? 'Entrez un numéro sénégalais valide : mobile (70, 75, 76, 77, 78) ou fixe (33).'
+                : 'Entrez un numéro mobile sénégalais valide (70, 75, 76, 77 ou 78).',
             'telephone.unique' => 'Ce numéro est déjà utilisé.',
             'accepte_cgu.accepted' => 'Vous devez accepter les conditions générales pour continuer.',
             'nom_compagnie.required_if' => 'Indiquez le nom de votre compagnie.',

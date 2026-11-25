@@ -217,4 +217,28 @@ class EspaceAdminTest extends TestCase
 
         $this->assertSame(Trajet::STATUT_PUBLIE, $trajet->fresh()->statut);
     }
+
+        public function test_l_admin_cree_une_compagnie_avec_un_numero_fixe(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.transporteurs.store'), [
+                'type' => 'compagnie', 'nom_responsable' => 'Amadou Fall', 'nom_compagnie' => 'Baol Express',
+                'email' => 'fixe@baolexpress.sn', 'telephone' => '33 800 12 34',
+                'numero_agrement' => 'AGR-100555', 'password' => 'MotDePasse2026!', 'valider_immediatement' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('338001234', User::where('email', 'fixe@baolexpress.sn')->first()->telephone);
+    }
+
+    public function test_l_admin_ne_peut_pas_creer_un_particulier_avec_un_numero_fixe(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.transporteurs.store'), [
+                'type' => 'particulier', 'nom_responsable' => 'Amadou Fall',
+                'email' => 'part@exemple.sn', 'telephone' => '33 800 12 34',
+                'password' => 'MotDePasse2026!',
+            ])
+            ->assertSessionHasErrors('telephone');
+    }
 }
