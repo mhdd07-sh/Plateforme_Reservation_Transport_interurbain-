@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\Paiement\FakePaiementService;
 use App\Services\Paiement\PaiementServiceInterface;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use InvalidArgumentException;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -25,8 +26,23 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-        public function boot(): void
+            public function boot(): void
     {
+        // E-mail de vérification de l'adresse, en français.
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+            $minutes = config('auth.verification.expire', 60);
+
+            return (new MailMessage)
+                ->subject('Confirmez votre adresse e-mail')
+                ->greeting('Bonjour ' . $notifiable->name . ',')
+                ->line('Merci de vous être inscrit sur ' . config('app.name') . '. Confirmez votre adresse e-mail pour activer votre compte.')
+                ->action('Confirmer mon adresse e-mail', $url)
+                ->line("Ce lien expire dans {$minutes} minutes.")
+                ->line("Si vous n'avez pas créé de compte, ignorez simplement ce message.")
+                ->salutation("L'équipe " . config('app.name'));
+        });
+
+        // E-mail de réinitialisation du mot de passe, en français.
         ResetPassword::toMailUsing(function (object $notifiable, string $token) {
             $url = url(route('password.reset', [
                 'token' => $token,
