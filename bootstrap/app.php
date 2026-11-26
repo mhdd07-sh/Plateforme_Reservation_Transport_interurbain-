@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+    
+    $middleware->trustProxies(at: env('APP_ENV') === 'local' ? '*' : null);
     $middleware->alias([
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'transporteur.valide' => \App\Http\Middleware\TransporteurValide::class,
