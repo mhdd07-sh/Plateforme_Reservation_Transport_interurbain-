@@ -29,6 +29,22 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Aperçu des e-mails dans le navigateur (développement uniquement).
+// Aperçu des e-mails dans le navigateur (développement uniquement).
+if (app()->environment('local')) {
+    Route::get('/apercu-mail/{type}', function (string $type) {
+        $user = auth()->user() ?? new \App\Models\User(['name' => 'Fatou Sow', 'email' => 'fatou.sow@exemple.sn']);
+        $user->id ??= 1;
+
+        return match ($type) {
+            'verification' => (new \Illuminate\Auth\Notifications\VerifyEmail)->toMail($user),
+            'mot-de-passe' => (new \Illuminate\Auth\Notifications\ResetPassword('jeton-exemple'))->toMail($user),
+            default => abort(404),
+        };
+    });
+}
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/voyageur.php';
